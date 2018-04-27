@@ -10,7 +10,7 @@ from code.dataset import WikipediaDataSet
 
 
 def train_autoencoder_model(test_train_split_dataset_path, model_name, numof_features,
-                            num_epochs, batch_size, learning_rate, save_model=True):
+                            num_epochs, batch_size, learning_rate, save_model_path=None):
     '''
     Train the autoencoder model.
     :param test_train_split_dataset_path: (str) the path to .npz file with train/test split file of processed
@@ -20,7 +20,7 @@ def train_autoencoder_model(test_train_split_dataset_path, model_name, numof_fea
     :param num_epochs: (int) number of learning epochs.
     :param batch_size: (int) size of the learning/testing batch/
     :param learning_rate: (float) learning rate
-    :param save_model: (bool) save the model under name `model_name` or not.
+    :param save_model_path: (str) save the model under name `model_name` in this path.
     :return: autoencoder model
     '''
     train_dataset = WikipediaDataSet(test_train_split_dataset_path, train=True,
@@ -59,7 +59,7 @@ def train_autoencoder_model(test_train_split_dataset_path, model_name, numof_fea
 
             # ==== Testing ====
             model.eval()
-            _, test_loss = evalaute_running_output_loss(model, criterion, test_dataloader)
+            _, test_loss = evalaute_running_output_loss(model, test_dataloader, criterion)
             print('epoch [{}/{}], train loss:{:.8f}, test loss:{:.8f}'
                   .format(epoch + 1, num_epochs, train_loss.data[0], test_loss.data[0]))
 
@@ -71,12 +71,12 @@ def train_autoencoder_model(test_train_split_dataset_path, model_name, numof_fea
     train_labels = np.hstack(train_labels_list)
 
     # saving progress
-    np.savez_compressed('reconstructed_train',
+    np.savez_compressed(save_model_path +'reconstructed_train',
                         train_reconstructed_features=train_reconstructed_features,
                         train_labels=train_labels)
 
-    if save_model:
-        torch.save(model, 'trained_model' + model_name)
+    if save_model_path:
+        torch.save(model, save_model_path + 'trained_model' + model_name)
 
     return model
 
@@ -87,7 +87,7 @@ if __name__ == "__main__":
     batch_size = 2048
     learning_rate = 1e-3
     numof_features = 300
-    already_trained = True
+    already_trained = False
     model_name = '_300_200_100_50'
     data_path = './data/'
     test_train_split_dataset_path = data_path + 'full_data_test_train_split_with_embeddings.npz'
@@ -102,7 +102,7 @@ if __name__ == "__main__":
 
     if not already_trained:
         model = train_autoencoder_model(test_train_split_dataset_path, model_name, numof_features, num_epochs,
-                                        batch_size, learning_rate, save_model=True)
+                                        batch_size, learning_rate, save_model_path=data_path)
 
     else:
         model = torch.load(data_path + 'trained_model' + model_name)
@@ -112,7 +112,7 @@ if __name__ == "__main__":
 
     print("Inference: test features compression")
     final_testloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True)
-    test_reconstructed_features, test_labels = evalaute_running_output_loss(model, final_testloader,
+    test_reconstructed_features, test_labels = evalaute_running_output_loss(model, final_testloader, criterion,
                                                                             output_features_labels=True)
     np.savez_compressed(data_path + 'reconstructed_test',
                         test_reconstructed_features=test_reconstructed_features,
