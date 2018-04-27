@@ -4,13 +4,25 @@ from torch.utils.data import DataLoader
 from torch.autograd import Variable
 import numpy as np
 from sklearn.linear_model import LogisticRegression
-from autoencoder import autoencoder
-from utils import normalization_transform, init_weights, evalaute_running_output_loss
-from dataset import WikipediaDataSet
+from code.autoencoder import autoencoder
+from code.utils import normalization_transform, init_weights, evalaute_running_output_loss
+from code.dataset import WikipediaDataSet
 
 
-def train_end2end_model(test_train_split_dataset_path, model_name, numof_features,
-                        num_epochs, batch_size, learning_rate, save_model=True):
+def train_autoencoder_model(test_train_split_dataset_path, model_name, numof_features,
+                            num_epochs, batch_size, learning_rate, save_model=True):
+    '''
+    Train the autoencoder model.
+    :param test_train_split_dataset_path: (str) the path to .npz file with train/test split file of processed
+            (numeric) features and labels.
+    :param model_name: (str) name of model file.
+    :param numof_features: (int) the number of input features in the file.
+    :param num_epochs: (int) number of learning epochs.
+    :param batch_size: (int) size of the learning/testing batch/
+    :param learning_rate: (float) learning rate
+    :param save_model: (bool) save the model under name `model_name` or not.
+    :return: autoencoder model
+    '''
     train_dataset = WikipediaDataSet(test_train_split_dataset_path, train=True,
                                      transforms=normalization_transform)
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
@@ -77,7 +89,8 @@ if __name__ == "__main__":
     numof_features = 300
     already_trained = True
     model_name = '_300_200_100_50'
-    test_train_split_dataset_path = './full_data_test_train_split_with_embeddings.npz'
+    data_path = './data/'
+    test_train_split_dataset_path = data_path + 'full_data_test_train_split_with_embeddings.npz'
 
     test_dataset = WikipediaDataSet(test_train_split_dataset_path, train=False,
                                     transforms=normalization_transform)
@@ -88,24 +101,24 @@ if __name__ == "__main__":
     train_labels = None
 
     if not already_trained:
-        model = train_end2end_model(test_train_split_dataset_path, model_name, numof_features, num_epochs,
-                                    batch_size, learning_rate, save_model=True)
+        model = train_autoencoder_model(test_train_split_dataset_path, model_name, numof_features, num_epochs,
+                                        batch_size, learning_rate, save_model=True)
 
     else:
-        model = torch.load('trained_model' + model_name)
-        data = np.load('reconstructed_train.npz')
+        model = torch.load(data_path + 'trained_model' + model_name)
+        data = np.load(data_path + 'reconstructed_train.npz')
         train_reconstructed_features = data['train_reconstructed_features']
         train_labels = data['train_labels']
 
-    print("\n Inference: test features compression")
+    print("Inference: test features compression")
     final_testloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True)
     test_reconstructed_features, test_labels = evalaute_running_output_loss(model, final_testloader,
                                                                             output_features_labels=True)
-    np.savez_compressed('reconstructed_test',
+    np.savez_compressed(data_path + 'reconstructed_test',
                         test_reconstructed_features=test_reconstructed_features,
                         test_labels=test_labels)
 
-    print("Classification using the compressed features: (Ctrl+C to stop)")
+    print("Classification using the compressed features:")
     clf_reconstructed = LogisticRegression(verbose=True, solver='sag', n_jobs=4, tol=0.1)
     clf_reconstructed.fit(train_reconstructed_features, train_labels)
     reconstructed_score = clf_reconstructed.score(test_reconstructed_features, test_labels)
