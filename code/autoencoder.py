@@ -1,14 +1,14 @@
 from torch import nn
 
 
-class autoencoder(nn.Module):
+class Autoencoder(nn.Module):
     '''
     Main class of autoencoder. The constructer requires the number of input features.
     The model architecture is a two-hidden layer, symmetrical autoencoder with batch normalization and ReLU activations.
     '''
 
     def __init__(self, numof_features):
-        super(autoencoder, self).__init__()
+        super(Autoencoder, self).__init__()
         self.encoder = nn.Sequential(
             nn.Linear(numof_features, 200, bias=False),
             nn.BatchNorm1d(200),

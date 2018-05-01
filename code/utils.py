@@ -65,5 +65,3 @@ def evalaute_running_output_loss(model, dataloader, criterion, output_features_l
             running_output += _output.data[0]  # just for printing purposes: take one sample of the batch.
             running_loss += _loss
         return running_output / (i + 1), running_loss / (i + 1)
-
-

@@ -4,7 +4,7 @@ from torch.utils.data import DataLoader
 from torch.autograd import Variable
 import numpy as np
 from sklearn.linear_model import LogisticRegression
-from code.autoencoder import autoencoder
+from code.autoencoder import Autoencoder
 from code.utils import normalization_transform, init_weights, evalaute_running_output_loss
 from code.dataset import WikipediaDataSet
 
@@ -27,7 +27,7 @@ def train_autoencoder_model(test_train_split_dataset_path, model_name, numof_fea
                                      transforms=normalization_transform)
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 
-    model = autoencoder(numof_features)
+    model = Autoencoder(numof_features)
     optimizer = torch.optim.Adam(
         model.parameters(), lr=learning_rate, weight_decay=1e-5)
     model.apply(init_weights)

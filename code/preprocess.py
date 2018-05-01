@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def preprocess_documents_matrix(docs_mat):
     '''
     preprocess raw articles, in the form of a numpy array of strings (documents) or a list of strings.
